@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>控制台 - 国家公园智慧管理系统</title>
+    <link rel="stylesheet" href="/web/assets/css/common.css" />
+    <style>
+      .dashboard-welcome { margin-bottom: 32px; }
+      .welcome-text { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+      .welcome-sub { color: var(--text-muted); font-size: 15px; }
+      .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
+      @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr; } }
+      .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+      .section-title::after { content: ''; flex: 1; height: 1px; background: var(--glass-border); }
+      .modules-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px; }
+      @media (max-width: 1024px) { .modules-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 600px) { .modules-grid { grid-template-columns: 1fr; } }
+      .quick-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+      .activity-list { display: flex; flex-direction: column; gap: 12px; }
+      .activity-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius-md); }
+      .activity-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--glass-hover); }
+      .activity-content { flex: 1; }
+      .activity-title { font-weight: 500; margin-bottom: 2px; }
+      .activity-time { font-size: 12px; color: var(--text-muted); }
+      .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+      @media (max-width: 1024px) { .two-col { grid-template-columns: 1fr; } }
+      
+      /* 用户端样式 */
+      .user-profile-card { background: linear-gradient(135deg, #16a34a, #15803d); color: white; border-radius: 16px; padding: 32px; margin-bottom: 24px; }
+      .user-profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+      .user-avatar-large { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; }
+      .user-info h2 { font-size: 24px; margin-bottom: 4px; }
+      .user-info p { opacity: 0.9; font-size: 14px; }
+      .user-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .user-stat { text-align: center; padding: 16px; background: rgba(255,255,255,0.15); border-radius: 12px; }
+      .user-stat-value { font-size: 28px; font-weight: 700; }
+      .user-stat-label { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+      .service-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 24px; }
+      @media (max-width: 768px) { .service-cards { grid-template-columns: 1fr; } }
+      .service-card { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; transition: all 0.2s; }
+      .service-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
+      .service-card-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 16px; }
+      .service-card-icon.green { background: linear-gradient(135deg, rgba(22,163,74,0.15), rgba(22,163,74,0.05)); }
+      .service-card-icon.blue { background: linear-gradient(135deg, rgba(14,165,233,0.15), rgba(14,165,233,0.05)); }
+      .service-card-icon.purple { background: linear-gradient(135deg, rgba(168,85,247,0.15), rgba(168,85,247,0.05)); }
+      .service-card-icon.orange { background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(249,115,22,0.05)); }
+      .service-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+      .service-card p { color: var(--text-muted); font-size: 14px; line-height: 1.5; flex: 1; }
+      .service-card .btn { margin-top: 16px; }
+      .reservation-list { margin-top: 8px; }
+      .reservation-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; margin-bottom: 12px; }
+      .reservation-info { display: flex; align-items: center; gap: 16px; }
+      .reservation-date { width: 60px; text-align: center; }
+      .reservation-date .day { font-size: 24px; font-weight: 700; color: var(--primary); }
+      .reservation-date .month { font-size: 12px; color: var(--text-muted); }
+      .reservation-detail h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+      .reservation-detail p { font-size: 13px; color: var(--text-muted); }
+
+      /* 表单输入统一风格 */
+      .form-input, .form-select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      .form-group label {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside id="sidebar" class="sidebar"></aside>
+      <div class="main">
+        <header id="header" class="header"></header>
+        <main class="content container">
+          <!-- 管理端内容 -->
+          <div id="adminDashboard" style="display:none;">
+            <div class="dashboard-welcome">
+              <h1 class="welcome-text">欢迎回来，<span id="adminUserName">管理员</span> 👋</h1>
+              <p class="welcome-sub">这是您的国家公园管理控制台，可以快速访问各项功能模块。</p>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="statVisitors">--</div><div class="stat-label">今日游客</div></div>
+              <div class="stat-card"><div class="stat-icon accent">🔬</div><div class="stat-value" id="statProjects">--</div><div class="stat-label">进行中项目</div></div>
+              <div class="stat-card"><div class="stat-icon warning">⚠️</div><div class="stat-value" id="statAlerts">--</div><div class="stat-label">待处理告警</div></div>
+              <div class="stat-card"><div class="stat-icon info">🦁</div><div class="stat-value" id="statSpecies">--</div><div class="stat-label">物种记录</div></div>
+            </div>
+            <div class="section-title">功能模块</div>
+            <div class="modules-grid">
+              <a class="nav-card" href="/web/pages/visitor.html"><div class="nav-card-icon">🎫</div><div class="nav-card-title">游客服务</div><div class="nav-card-desc">预约管理、入园记录、流量监控</div></a>
+              <a class="nav-card" href="/web/pages/environment.html"><div class="nav-card-icon">🌡️</div><div class="nav-card-title">生态环境监测</div><div class="nav-card-desc">监测指标、设备管理、环境数据</div></a>
+              <a class="nav-card" href="/web/pages/enforcement.html"><div class="nav-card-icon">🛡️</div><div class="nav-card-title">执法监管</div><div class="nav-card-desc">执法人员、巡查记录、违规处理</div></a>
+              <a class="nav-card" href="/web/pages/research.html"><div class="nav-card-icon">🔬</div><div class="nav-card-title">科研数据</div><div class="nav-card-desc">科研项目、样本采集、研究成果</div></a>
+              <a class="nav-card" href="/web/pages/biodiversity.html"><div class="nav-card-icon">🦋</div><div class="nav-card-title">生物多样性</div><div class="nav-card-desc">物种档案、栖息地管理</div></a>
+              <a class="nav-card" href="#" style="opacity:0.5;pointer-events:none;"><div class="nav-card-icon">⚙️</div><div class="nav-card-title">系统设置</div><div class="nav-card-desc">开发中...</div></a>
+            </div>
+            <div class="notice notice-info"><strong>系统信息：</strong>当前角色 <span id="roleTag" class="tag tag-primary">加载中</span></div>
+          </div>
+
+          <!-- 用户端内容 - 游客服务中心 -->
+          <div id="userDashboard" style="display:none;">
+            <div class="user-profile-card">
+              <div class="user-profile-header">
+                <div class="user-avatar-large" id="userAvatarLarge">张</div>
+                <div class="user-info">
+                  <h2 id="userDisplayName">游客</h2>
+                  <p>🎫 欢迎来到国家公园游客服务中心</p>
+                </div>
+              </div>
+              <div class="user-stats">
+                <div class="user-stat"><div class="user-stat-value" id="userReservationCount">0</div><div class="user-stat-label">预约次数</div></div>
+                <div class="user-stat"><div class="user-stat-value" id="userVisitCount">0</div><div class="user-stat-label">入园次数</div></div>
+                <div class="user-stat"><div class="user-stat-value" id="userPendingCount">0</div><div class="user-stat-label">待审核</div></div>
+              </div>
+            </div>
+
+            <!-- 预约入园表单 -->
+            <div class="section-title">📝 预约入园</div>
+            <div class="card" style="margin-bottom:24px;">
+              <div class="card-body">
+                <form id="reservationForm" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+                  <div class="form-group">
+                    <label>预约人姓名 <span style="color:red">*</span></label>
+                    <input type="text" class="form-input" id="visitorName" required placeholder="请输入姓名" />
+                  </div>
+                  <div class="form-group">
+                    <label>身份证号 <span style="color:red">*</span></label>
+                    <input type="text" class="form-input" id="idCardNo" required placeholder="请输入身份证号" maxlength="18" />
+                  </div>
+                  <div class="form-group">
+                    <label>选择公园 <span style="color:red">*</span></label>
+                    <select class="form-select" id="areaId" required>
+                      <option value="">请选择公园</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>联系电话</label>
+                    <input type="tel" class="form-input" id="phone" placeholder="选填" />
+                  </div>
+                  <div class="form-group">
+                    <label>预约日期 <span style="color:red">*</span></label>
+                    <input type="date" class="form-input" id="reserveDate" required />
+                  </div>
+                  <div class="form-group">
+                    <label>预约时段 <span style="color:red">*</span></label>
+                    <select class="form-select" id="timeSlot" required>
+                      <option value="">请选择</option>
+                      <option value="上午">上午</option>
+                      <option value="下午">下午</option>
+                      <option value="全天">全天</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>预约人数 <span style="color:red">*</span></label>
+                    <input type="number" class="form-input" id="partySize" min="1" max="20" value="1" required />
+                  </div>
+                  <div style="grid-column:1/-1;text-align:right;margin-top:8px;">
+                    <button type="submit" class="btn btn-primary">提交预约</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- 我的预约记录 -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+              <div class="section-title" style="margin:0;">🎫 我的预约</div>
+              <button class="btn btn-secondary" onclick="toggleMyReservations()" id="toggleReservationsBtn">📋 查看我的预约</button>
+            </div>
+            <div class="card" id="myReservationsCard" style="display:none;">
+              <div class="card-body">
+                <div class="reservation-list" id="recentReservations">
+                  <div class="loading">加载中...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="/web/assets/js/api.js"></script>
+    <script src="/web/assets/js/auth.js"></script>
+    <script src="/web/assets/js/common.js"></script>
+    <script>
+      (function () {
+        if (!Auth.requireLogin()) return;
+
+        var userProfile = null;
+        var parkList = []; // 存储公园列表
+
+        Common.initLayout({ active: "home" }).then(function (ctx) {
+          var profile = ctx.profile;
+          userProfile = profile;
+          var isAdmin = ctx.isAdmin;
+
+          if (isAdmin) {
+            document.getElementById("adminDashboard").style.display = "block";
+            document.getElementById("adminUserName").textContent = profile.name || "管理员";
+            document.getElementById("roleTag").textContent = profile.role_type || "管理员";
+            loadAdminStats();
+          } else {
+            document.getElementById("userDashboard").style.display = "block";
+            document.getElementById("userDisplayName").textContent = profile.name || "游客";
+            document.getElementById("userAvatarLarge").textContent = (profile.name || "游").charAt(0);
+            initUserForm(profile);
+            loadUserStats(profile);
+          }
+        });
+
+        // ✅ 加载公园列表（完整实现）
+        async function loadParks() {
+          try {
+            const areas = await Api.requestJson("GET", "/api/visitor/areas");
+            parkList = Array.isArray(areas) ? areas : [];
+            const select = document.getElementById("areaId");
+            select.innerHTML = '<option value="">请选择公园</option>';
+            parkList.forEach(area => {
+              const option = document.createElement("option");
+              option.value = area.area_id;
+              option.textContent = area.area_name;
+              select.appendChild(option);
+            });
+          } catch (e) {
+            console.error("加载公园列表失败:", e);
+            Common.showToast("加载公园列表失败，请稍后重试", "error");
+          }
+        }
+
+        function initUserForm(profile) {
+          // 设置最小日期为明天
+          var tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          document.getElementById("reserveDate").min = tomorrow.toISOString().split("T")[0];
+
+          // 自动填充用户信息
+          if (profile) {
+            document.getElementById("visitorName").value = profile.name || "";
+            document.getElementById("phone").value = profile.phone || "";
+          }
+
+          // 加载公园列表
+          loadParks();
+
+          // 表单提交
+          document.getElementById("reservationForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            submitReservation();
+          });
+        }
+
+        async function submitReservation() {
+          var visitorName = document.getElementById("visitorName").value.trim();
+          var idCardNo = document.getElementById("idCardNo").value.trim();
+          var reserveDate = document.getElementById("reserveDate").value;
+          var timeSlot = document.getElementById("timeSlot").value;
+          var partySize = parseInt(document.getElementById("partySize").value) || 1;
+          var phone = document.getElementById("phone").value.trim();
+          var areaId = document.getElementById("areaId").value;
+
+          if (!visitorName || !idCardNo || !reserveDate || !timeSlot || !areaId) {
+            Common.showToast("请填写所有必填项", "error");
+            return;
+          }
+
+          if (idCardNo.length < 5) {
+            Common.showToast("请输入有效的身份证号", "error");
+            return;
+          }
+
+          try {
+            var ticketAmount = partySize * 120;  // 每人120元
+            var result = await Api.requestJson("POST", "/api/visitor/reservations", {
+              visitor_name: visitorName,
+              id_card_no: idCardNo,
+              reserve_date: reserveDate,
+              time_slot: timeSlot,
+              party_size: partySize,
+              phone: phone || null,
+              area_id: parseInt(areaId),
+              ticket_amount: ticketAmount
+            });
+            Common.showToast("✅ 预约成功！需付款: ¥" + ticketAmount + "，请等待审核", "success");
+            // 重置表单但保留用户名和电话
+            document.getElementById("idCardNo").value = "";
+            document.getElementById("areaId").value = "";
+            document.getElementById("reserveDate").value = "";
+            document.getElementById("timeSlot").value = "";
+            document.getElementById("partySize").value = "1";
+            // 刷新统计和列表
+            loadUserStats(userProfile);
+          } catch (e) {
+            Common.showToast("预约失败: " + Api.formatError(e), "error");
+          }
+        }
+
+        async function loadAdminStats() {
+          // 统计：今日游客
+          try {
+            var reservationsResp = await Api.requestJson("GET", "/api/visitor/reservations");
+            var reservations = Array.isArray(reservationsResp) ? reservationsResp : [];
+            var totalVisitors = reservations.reduce(function(sum, r) {
+              var size = r.party_size || r.PartySize || r.partySize || 1;
+              return sum + parseInt(size);
+            }, 0);
+            document.getElementById("statVisitors").textContent = totalVisitors > 0 ? totalVisitors : reservations.length;
+          } catch (e) {
+            document.getElementById("statVisitors").textContent = "0";
+          }
+
+          // 统计：进行中项目
+          try {
+            var projectsResp = await Api.requestJson("GET", "/api/research/projects");
+            var projects = Array.isArray(projectsResp) ? projectsResp : (projectsResp.projects || []);
+            var activeCount = projects.filter(function(p) {
+              var st = p.status || p.Status || "";
+              return st === "在研";
+            }).length;
+            document.getElementById("statProjects").textContent = activeCount;
+          } catch (e) {
+            document.getElementById("statProjects").textContent = "0";
+          }
+
+          // 统计：待处理告警
+          try {
+            var alertsResp = await Api.requestJson("GET", "/api/visitor/alerts");
+            var alerts = Array.isArray(alertsResp) ? alertsResp : (alertsResp.alerts || []);
+            var pendingCount = alerts.filter(function(a) {
+              var st = a.Status || a.status || "";
+              return st === "未处理";
+            }).length;
+            document.getElementById("statAlerts").textContent = pendingCount;
+          } catch (e) {
+            document.getElementById("statAlerts").textContent = "0";
+          }
+
+          // 统计：物种记录
+          try {
+            var speciesResp = await Api.requestJson("GET", "/api/biodiversity/species?page=1&page_size=1");
+            document.getElementById("statSpecies").textContent = speciesResp.total || 0;
+          } catch (e) {
+            document.getElementById("statSpecies").textContent = "0";
+          }
+        }
+
+        var reservationsVisible = false;
+        window.toggleMyReservations = function() {
+          reservationsVisible = !reservationsVisible;
+          var card = document.getElementById('myReservationsCard');
+          var btn = document.getElementById('toggleReservationsBtn');
+          if (reservationsVisible) {
+            card.style.display = 'block';
+            btn.textContent = '🔼 收起预约列表';
+            loadUserStats(userProfile);
+          } else {
+            card.style.display = 'none';
+            btn.textContent = '📋 查看我的预约';
+          }
+        }
+
+        async function loadUserStats(profile) {
+          var reservationCount = 0, visitCount = 0, pendingCount = 0;
+          var recentHtml = '';
+
+          try {
+            var reservations = await Api.requestJson("GET", "/api/visitor/reservations/me");
+            reservations = reservations || [];
+
+            var seen = {};
+            reservations = reservations.filter(function(r) {
+              var id = r.reservation_id || r.ReservationId;
+              if (seen[id]) return false;
+              seen[id] = true;
+              return true;
+            });
+
+            reservationCount = reservations.length;
+            pendingCount = reservations.filter(function(r) {
+              var st = r.reserve_status || r.ReserveStatus || "";
+              return st === "待审核" || st === "待确认";
+            }).length;
+
+            if (reservations.length > 0) {
+              reservations.forEach(function(r) {
+                var date = new Date(r.reserve_date || r.ReserveDate);
+                var status = r.reserve_status || r.ReserveStatus || "待审核";
+                var payStatus = r.pay_status || r.PayStatus || "未支付";
+                var visitorName = r.visitor_name || r.VisitorName || "";
+                var idCard = r.id_card_no || r.IdCardNo || "";
+                var partySize = r.party_size || r.PartySize || 1;
+                var timeSlot = r.time_slot || r.TimeSlot || "全天";
+                var ticketAmount = r.ticket_amount || r.TicketAmount || 0;
+                var resId = r.reservation_id || r.ReservationId;
+                var areaName = r.area_name || "未知公园";
+
+                var statusBg = (status === "已确认" || status === "已通过") ? "#d1fae5" :
+                               (status === "待审核" || status === "待确认") ? "#fef3c7" :
+                               (status === "已取消" || status === "已拒绝") ? "#fee2e2" : "#f3f4f6";
+                var statusColor = (status === "已确认" || status === "已通过") ? "#047857" :
+                                  (status === "待审核" || status === "待确认") ? "#b45309" :
+                                  (status === "已取消" || status === "已拒绝") ? "#b91c1c" : "#6b7280";
+
+                var maskedId = idCard.length > 6 ? idCard.substring(0, 3) + "****" + idCard.substring(idCard.length - 4) : idCard;
+
+                recentHtml += '<div class="reservation-item" style="flex-direction:column;align-items:stretch;gap:12px;">' +
+                  '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                    '<div class="reservation-info">' +
+                      '<div class="reservation-date"><div class="day">' + date.getDate() + '</div><div class="month">' + (date.getMonth()+1) + '月</div></div>' +
+                      '<div class="reservation-detail">' +
+                        '<h4>预约 #' + resId + '</h4>' +
+                        '<p>👤 ' + visitorName + ' · 🪪 ' + maskedId + '</p>' +
+                        '<p>📍 ' + areaName + '</p>' +
+                      '</div>' +
+                    '</div>' +
+                    '<span style="padding:6px 12px;border-radius:20px;font-size:13px;font-weight:500;background:' + statusBg + ';color:' + statusColor + ';">' + status + '</span>' +
+                  '</div>' +
+                  '<div style="display:flex;gap:16px;padding-left:76px;font-size:13px;color:var(--text-muted);">' +
+                    '<span>👥 ' + partySize + '人</span>' +
+                    '<span>🕐 ' + timeSlot + '</span>' +
+                    '<span>💰 ¥' + ticketAmount + '</span>' +
+                    '<span>📋 ' + payStatus + '</span>' +
+                  '</div>' +
+                '</div>';
+              });
+            } else {
+              recentHtml = '<div style="text-align:center;padding:40px;color:var(--text-muted);">暂无预约记录，请在上方表单中提交预约</div>';
+            }
+          } catch (e) {
+            console.error("加载预约失败:", e);
+            recentHtml = '<div style="text-align:center;padding:40px;color:var(--text-muted);">加载失败: ' + e.message + '</div>';
+          }
+
+          visitCount = 0;
+
+          document.getElementById("userReservationCount").textContent = reservationCount;
+          document.getElementById("userVisitCount").textContent = visitCount;
+          document.getElementById("userPendingCount").textContent = pendingCount;
+          document.getElementById("recentReservations").innerHTML = recentHtml;
+        }
+      })();
+    </script>
+  </body>
+</html>
